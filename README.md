@@ -73,5 +73,5 @@ Apache 2.0; see [`LICENSE`](LICENSE) for details.
 ## Disclaimer
 
 The script pulls performance campaign data from client's SA360 platform; it's equivalent to create a report directly on the SA360 UI. The data will rely on the spreadsheet and the user implementing this script will be responsible to share and/or distribute this data to any third parties.
-Goggle is not responsible of any unauthorized disclosure or use of this data.
+Google is not responsible of any unauthorized disclosure or use of this data.
 This project is not an official Google project. It is not supported by Google and Google specifically disclaims all warranties as to its quality, merchantability, or fitness for a particular purpose.
