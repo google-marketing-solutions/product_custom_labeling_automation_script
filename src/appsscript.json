@@ -1,0 +1,8 @@
+{
+  "timeZone": "Europe/Rome",
+  "dependencies": {
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "oauthScopes": ["https://www.googleapis.com/auth/doubleclicksearch", "https://www.googleapis.com/auth/script.external_request", "https://www.googleapis.com/auth/adsense", "https://www.googleapis.com/auth/spreadsheets.currentonly", "https://www.googleapis.com/auth/script.scriptapp"],
+  "runtimeVersion": "V8"
+}
