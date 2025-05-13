@@ -24,12 +24,6 @@ const FIELDS = {
   'metrics.cost_micros': 'metrics.cost_micros'
 }
 
-const QUERY = `SELECT ${Object.keys(FIELDS).toString()} 
-  FROM shopping_performance_view 
-  WHERE segments.product_item_id != "undefined" 
-  ORDER BY segments.product_item_id`;
-
-
 function runShoppingReport() {
   let configValues = getInputParameters();
   updateStatus(STATUS.START);
@@ -38,7 +32,7 @@ function runShoppingReport() {
 }
 
 function getShoppingReportData(configValues) {
-  let shoppingReport = processQuery(QUERY, configValues.EXTERNAL_CID);
+  let shoppingReport = processQuery(configValues.EXTERNAL_CID, configValues.START_DATE, configValues.END_DATE);
   writeReportToSheet(REPORT_HEADERS, shoppingReport, SHEET_NAMES.REPORTING_TAB);
 }
 
@@ -72,16 +66,34 @@ function checkCondition(condition, controlValue, threshold1, threshold2=0) {
   case "Less than": return controlValue < threshold1;
   case "Greater than or equal to": return controlValue >= threshold1;
   case "Less than or equal to": return controlValue <= threshold1;
-  case "Equal": return controlValue == threshold1;
+  case "Equal": return controlValue === threshold1;
   case "Is between": 
     if(threshold2 < threshold1) {
+      customLog_(`Please use Threshold 1 as "lower bound" and  Threshold 2 as "upper bound". Provided condition ${condition} is not valid`);
       throw new Error(`Please use Threshold 1 as "lower bound" and  Threshold 2 as "upper bound". Provided condition ${condition} is not valid`);
     }
-    if(threshold2 == threshold1) {
+    if(threshold2 === threshold1) {
+      customLog_(`Please use different threashold values. Provided threasholds ${threshold1} and ${threshold2} are equal`);
       throw new Error(`Please use different threashold values. Provided threasholds ${threshold1} and ${threshold2} are equal`);
     }
     return controlValue > threshold1 && controlValue < threshold2;
-  default: throw new Error(`Please provide a valid condition. Provided condition ${condition} is not valid`);
+  default: 
+    customLog_(`Please provide a valid condition. Provided condition ${condition} is not valid`);
+    throw new Error(`Please provide a valid condition. Provided condition ${condition} is not valid`);
+  }
+}
+
+/**
+ * Thhrows error if the start date has been configured after the end date.
+ * @param {!Object} startDate - The object containing the user configured start date.
+ * @param {!Object} endDate - The object containing the user configured start date.
+ *
+ * @private
+ */
+function dateConfiguration_(startDate, endDate){
+  if(!!startDate && !!endDate && startDate > endDate) {
+    customLog_(`Please provide the start date (${startDate}) before the end date (${endDate}).`);
+    throw new Error(`Please provide start date before the end date.`);
   }
 }
 
