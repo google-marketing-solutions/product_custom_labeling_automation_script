@@ -71,6 +71,9 @@ On the **Config** sheet, sets following parameters:
 * Threshold 1
 * Threshold 2 _(optional - to be used only for "Is between" condition - otherwise leave it blank)_
 * Your desired custom label
+* Start Date _(optional start date filtering for retrieving report)_
+* End Date _(optional end date filtering for retrieving report)_
+
 
 Once everything's set, go on top Google Sheet menu bar, click on _Product Custom Labeling Automation_ -> _Get All Changes_
 

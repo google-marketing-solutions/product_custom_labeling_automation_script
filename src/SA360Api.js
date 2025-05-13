@@ -42,7 +42,7 @@ function callApi(url, requestBody, methodType="GET", additionalHeaders={}, withP
     } while (result['nextPageToken']);
     return results;
   } catch (e) {
-    customLog('API call error: ' + e.toString());
+    customLog_('API call error: ' + e.toString());
     throw e;
   }
 }
@@ -54,7 +54,7 @@ function callApi(url, requestBody, methodType="GET", additionalHeaders={}, withP
  * @return {!object} custom object that contains the API call results (i.e. SA360 products metrics).
  * @private
  */
-function processQuery(query, customerId) {
+function processQuery(customerId, startDate, endDate) {
   if(!customerId){
     throw new Error(`The selected customer ID (${customerId}) is not valid!`);
   }
@@ -63,17 +63,44 @@ function processQuery(query, customerId) {
   // Specify which API resource you wish to call, reference: https://developers.google.com/search-ads/reporting/api/reference/rest
   const resourceURL = `${serviceURL}/searchAds360:search`
 
+  // Costruisci la query dinamicamente
+  let whereClause = 'WHERE segments.product_item_id != "undefined"';
+
+  let formattedStartDate, formattedEndDate = '';
+  if (!!startDate) {
+    //Format date AS yyyy-MM-dd and append it to the query
+    formattedStartDate = Utilities.formatDate(new Date(startDate), Session.getScriptTimeZone(), "yyyy-MM-dd");
+    whereClause += ` AND segments.date >= "${formattedStartDate}"`;
+  }
+
+  if (!!endDate) {
+    //Format date AS yyyy-MM-dd and append it to the query
+    formattedEndDate = Utilities.formatDate(new Date(endDate), Session.getScriptTimeZone(), "yyyy-MM-dd");
+    whereClause += ` AND segments.date <= "${formattedEndDate}"`;
+    if (!!startDate){
+      dateConfiguration_(formattedStartDate, formattedEndDate);
+    }
+  }
+
+  const finalQuery = `SELECT ${Object.keys(FIELDS).toString()} 
+                      FROM shopping_performance_view 
+                      ${whereClause}
+                      ORDER BY segments.product_item_id`;
+
+  console.log(finalQuery);
+
   const requestBody ={
-    "query": query
+    "query": finalQuery
   }
   const method = "POST";
   const headers = {
     "login-customer-id": customerId
   }
-  const request = callApi(resourceURL, requestBody, method, headers, true)
+  const request = callApi(resourceURL, requestBody, method, headers, true);
   
   if( !request['0']['results']){
-    throw new Error(customLog(LOG_SHEET, request['0']['error']['message']));
+    customLog_(request['0']['error']['message']);
+    throw new Error(request['0']['error']['message']);
   }
 
   return request['0']['results'];

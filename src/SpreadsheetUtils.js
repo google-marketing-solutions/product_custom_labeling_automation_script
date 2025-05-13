@@ -3,7 +3,8 @@ const BATCH_SIZE = 100;
 const SHEET_NAMES = {
   INPUT_TAB: 'Config',
   REPORTING_TAB: 'SA360 Shopping Report',
-  OUTPUT_TAB: 'Product Feed Custom Labeling'
+  OUTPUT_TAB: 'Product Feed Custom Labeling',
+  LOG_SHEET: 'Logs'
 }
 
 const RANGE_NAMES = {
@@ -41,6 +42,7 @@ function onOpen() {
   ui.createMenu('Product Custom Labeling Automation')
       .addItem('SA360 Report Extraction', 'runShoppingReport')
       .addItem('Get All Changes', 'getAllChanges')
+      .addItem('Clear all logs', 'clearAllLogs')
       .addToUi();
 }
 
@@ -58,7 +60,10 @@ function getInputParameters() {
       CONDITION: ss.getRange(`${SHEET_NAMES.INPUT_TAB}!B3`).getValue(),
       THRESHOLD1: ss.getRange(`${SHEET_NAMES.INPUT_TAB}!B4`).getValue(),
       THRESHOLD2: ss.getRange(`${SHEET_NAMES.INPUT_TAB}!B5`).getValue(),
-      CUSTOM_LABEL: ss.getRange(`${SHEET_NAMES.INPUT_TAB}!B7`).getValue()
+      CUSTOM_LABEL: ss.getRange(`${SHEET_NAMES.INPUT_TAB}!B7`).getValue(),
+      // Aggiungi startDate e endDate
+      START_DATE: ss.getRange(`${SHEET_NAMES.INPUT_TAB}!B8`).getValue(),
+      END_DATE: ss.getRange(`${SHEET_NAMES.INPUT_TAB}!B9`).getValue()
   };
   return configValues;
 }
@@ -161,11 +166,13 @@ function updateStatus(msg, currentIndex=0, totalIndex=0) {
     case STATUS.START:
     case STATUS.LABELING:
       spreadsheet.getRangeByName(RANGE_NAMES.STATUS).setValues([[msg]]);
+      customLog_(STATUS.LABELING);
       break;
     case STATUS.IN_PROGRESS:
       spreadsheet.getRangeByName(RANGE_NAMES.STATUS).setValues(
         [[`${STATUS.IN_PROGRESS}: ${currentIndex + 1}/${totalIndex} (${((currentIndex+1)*100/totalIndex).toFixed(2)}%)`]]
       );
+      customLog_(STATUS.IN_PROGRESS);
       break;
     case STATUS.FINISH:
       let d = new Date();
@@ -173,8 +180,34 @@ function updateStatus(msg, currentIndex=0, totalIndex=0) {
         [[`${STATUS.FINISH} on ${d.toLocaleString("en-US")}`]]
       );
       SpreadsheetApp.getActive().toast("All data processed");
+      customLog_(STATUS.FINISH);
       break;
     default:
-      console.error('Unknown status');
+      customLog_('Unknown status');
   }
+}
+
+/**
+ * Appends a new entry (with timestamp) in the Log sheet.
+ * @param{string} message: Message to print
+ * @public
+ */
+function customLog_(message) {
+  const logRow = [
+    Utilities.formatDate(new Date(), 'Europe/Rome', 'yyyy-MM-dd HH:mm:ss'),
+    message
+  ];
+  SpreadsheetApp.getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAMES.LOG_SHEET)
+      .appendRow(logRow);
+}
+
+/**
+ * Clear all logs.
+ * @public
+ */
+function clearAllLogs() {
+  const logSheet = SpreadsheetApp.getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAMES.LOG_SHEET);
+  logSheet.getRange(2, 1, logSheet.getMaxRows(), logSheet.getMaxColumns()).clear()
 }
